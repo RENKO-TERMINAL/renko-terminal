@@ -1,1 +1,52 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Renko Terminal</title><style>body{font-family:Arial;background:#0f172a;color:white;margin:0;padding:15px}h1{text-align:center}h1 span{color:#22c55e}.box{text-align:center;background:#1e293b;padding:12px;border-radius:10px;margin:10px 0}table{width:100%;border-collapse:collapse;background:white;color:black;border-radius:10px;overflow:hidden}th{background:#0f172a;color:white;padding:10px}td{padding:9px;text-align:center;border-bottom:1px solid #ddd}.BUY{background:#dcfce7;color:#166534;font-weight:bold}.SELL{background:#fee2e2;color:#991b1b;font-weight:bold}input{width:100%;padding:10px;margin:10px 0;border-radius:8px;border:none}</style></head><body><h1>🟩 RENKO <span>TERMINAL</span> 🟥</h1><div class="box" id="summary">Loading...</div><input id="search" placeholder="Search Stock... e.g. RELIANCE" onkeyup="filter()"><table><thead><tr><th>Stock</th><th>Price</th><th>Signal</th><th>Brick</th><th>Brick Size</th></tr></thead><tbody id="rows"></tbody></table><script>let all=[];fetch('signals.csv').then(r=>r.text()).then(t=>{let lines=t.trim().split('\n').slice(1);all=lines.map(l=>l.split(','));show(all);let b=all.filter(r=>r[2]=='BUY').length,s=all.filter(r=>r[2]=='SELL').length;document.getElementById('summary').innerHTML=`Total: ${all.length} | 🟢 BUY: ${b} | 🔴 SELL: ${s}`});function show(d){document.getElementById('rows').innerHTML=d.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="${r[2]}">${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td></tr>`).join('')}function filter(){let q=document.getElementById('search').value.toUpperCase();show(all.filter(r=>r[0].includes(q)))}</script></body></html>
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Renko Terminal - Final</title><style>body{font-family:Arial;background:#0f172a;color:white;margin:0;padding:12px}h1{text-align:center}h1 span{color:#22c55e}.top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.card{background:#1e293b;padding:12px;border-radius:12px;text-align:center}.card b{font-size:18px}.green{color:#22c55e}.red{color:#ef4444}.yellow{color:#facc15}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:12px 0}.stats div{background:#1e293b;padding:10px;border-radius:10px;text-align:center}input{width:100%;padding:10px;border-radius:8px;border:none;margin:10px 0;box-sizing:border-box}table{width:100%;border-collapse:collapse;background:white;color:black;border-radius:10px;overflow:hidden}th{background:#0f172a;color:white;padding:9px;font-size:13px}td{padding:8px;text-align:center;border-bottom:1px solid #ddd;font-size:13px}.BUY{background:#dcfce7;color:#166534;font-weight:bold}.SELL{background:#fee2e2;color:#991b1b;font-weight:bold}.live{background:#fef9c3;font-weight:bold}.exit{background:#dbeafe;font-weight:bold}.gap{background:#000;height:14px}.plan{background:#1e293b;padding:12px;border-radius:10px;margin:10px 0}.plan b{color:#22c55e}@media(max-width:700px){.top,.stats{grid-template-columns:1fr 1fr}}</style></head><body>
+<h1>🟩 RENKO <span>TERMINAL</span> 🟥</h1>
+<div class="top">
+<div class="card"><b>Kal Ka Trade AI 87%</b><br><span id="tomorrow">Loading...</span><br><small>TOMORROW 09:15</small></div>
+<div class="card"><b>📱 WhatsApp Alert</b><br><span id="whatsapp">Loading...</span><br><small>Mobile pe Message Aa Jayega</small></div>
+<div class="card"><b>Risk Meter: <span class="green">SAFE</span></b><br>70% Capital • 1 Trade Max<br><small>Risk Rs 30,000 se zyada nahi</small></div>
+</div>
+<div class="stats">
+<div><b id="s1">-</b><br>Total Stocks</div>
+<div><b id="s2" class="green">-</b><br>BUY Signals</div>
+<div><b id="s3" class="red">-</b><br>SELL Signals</div>
+<div><b id="s4">-</b><br>WAIT</div>
+<div><b id="s5">Live</b><br>Status</div>
+</div>
+<div class="plan"><b>Aaj Ka Plan:</b> <span id="plan">Sirf BUY wale Block se 1 Trade lo. SELL wale ko Short / Avoid karo. WAIT wale ko mat chhedo.</span></div>
+<input id="search" placeholder="Search Stock... e.g. RELIANCE" onkeyup="filter()">
+<table><thead><tr><th>Stock</th><th>Entry</th><th>LIVE</th><th>EXIT</th><th>Trail SL</th><th>Signal</th><th>Brick</th></tr></thead><tbody id="rows"></tbody></table>
+<script>
+let all=[];
+fetch('signals.csv').then(r=>r.text()).then(t=>{
+let lines=t.trim().split('\n').slice(1);
+all=lines.map(l=>l.split(',')).filter(r=>r.length>=5);
+let buys=all.filter(r=>r[2].trim()=='BUY');
+let sells=all.filter(r=>r[2].trim()=='SELL');
+let waits=all.length-buys.length-sells.length;
+document.getElementById('s1').innerText=all.length;
+document.getElementById('s2').innerText=buys.length;
+document.getElementById('s3').innerText=sells.length;
+document.getElementById('s4').innerText=waits;
+if(buys.length>0){
+let top=buys[0];
+let price=parseFloat(top[1]); let brick=parseFloat(top[4])||10;
+document.getElementById('tomorrow').innerHTML=top[0]+' BULL - Entry '+price+' • SL '+(price-brick*2).toFixed(1)+' • Target '+(price+brick*4).toFixed(1);
+document.getElementById('whatsapp').innerHTML=top[0]+' BULL Entry '+price;
+document.getElementById('plan').innerText='Aaj ka Best BUY: '+top[0]+' - Entry '+price+' ke paas. Sirf 1 Trade lo.';
+}
+show(all);
+});
+function rowHTML(r){
+let price=parseFloat(r[1]); let brick=parseFloat(r[4])||0;
+let trail=r[2].trim()=='BUY'?(price-brick).toFixed(1):(price+brick).toFixed(1);
+return `<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="live">${r[1]}</td><td class="exit">--</td><td>${trail}</td><td class="${r[2].trim()}">${r[2].trim()}</td><td>${r[3]} (${r[4]})</td></tr>`;
+}
+function show(d){
+let buys=d.filter(r=>r[2].trim()=='BUY');
+let sells=d.filter(r=>r[2].trim()=='SELL');
+let others=d.filter(r=>r[2].trim()!='BUY'&&r[2].trim()!='SELL');
+let html=buys.map(rowHTML).join('')+`<tr><td colspan="7" class="gap"></td></tr>`+sells.map(rowHTML).join('')+others.map(rowHTML).join('');
+document.getElementById('rows').innerHTML=html;
+}
+function filter(){let q=document.getElementById('search').value.toUpperCase();show(all.filter(r=>r[0].includes(q)))}
+</script></body></html>
