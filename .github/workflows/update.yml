@@ -8,6 +8,8 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -15,3 +17,10 @@ jobs:
           python-version: '3.11'
       - run: pip install -r requirements.txt
       - run: python update.py
+      - name: Save signals.csv
+        run: |
+          git config user.name "renko-bot"
+          git config user.email "bot@renko.local"
+          git add signals.csv
+          git commit -m "Daily Renko Signals" || echo "No changes"
+          git push
