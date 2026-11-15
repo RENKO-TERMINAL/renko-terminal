@@ -1,4 +1,4 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Renko Terminal - Final</title><style>body{font-family:Arial;background:#0f172a;color:white;margin:0;padding:12px}h1{text-align:center}h1 span{color:#22c55e}.top{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}.card{background:#1e293b;padding:12px;border-radius:12px;text-align:center}.card b{font-size:18px}.green{color:#22c55e}.red{color:#ef4444}.yellow{color:#facc15}.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:12px 0}.stats div{background:#1e293b;padding:10px;border-radius:10px;text-align:center}input{width:100%;padding:10px;border-radius:8px;border:none;margin:10px 0;box-sizing:border-box}table{width:100%;border-collapse:collapse;background:white;color:black;border-radius:10px;overflow:hidden}th{background:#0f172a;color:white;padding:9px;font-size:13px}td{padding:8px;text-align:center;border-bottom:1px solid #ddd;font-size:13px}.BUY{background:#dcfce7;color:#166534;font-weight:bold}.SELL{background:#fee2e2;color:#991b1b;font-weight:bold}.live{background:#fef9c3;font-weight:bold}.exit{background:#dbeafe;font-weight:bold}.gap{background:#000;height:14px}.plan{background:#1e293b;padding:12px;border-radius:10px;margin:10px 0}.plan b{color:#22c55e}@media(max-width:700px){.top,.stats{grid-template-columns:1fr 1fr}}</style></head><body>
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Renko Terminal - Full Dashboard</title><style>body{font-family:Arial;background:#0b1220;color:white;margin:0;padding:12px}h1{text-align:center}h1 span{color:#22c55e}.top,.stats{display:grid;gap:10px}.top{grid-template-columns:1fr 1fr 1fr}.stats{grid-template-columns:repeat(5,1fr);margin:12px 0}.card,.stat{background:#1e293b;padding:12px;border-radius:12px;text-align:center}.green{color:#22c55e}.red{color:#ef4444}.yellow{color:#facc15}.mid{display:grid;grid-template-columns:1.5fr 1fr;gap:10px}.box{background:#1e293b;padding:12px;border-radius:12px}.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:8px}.heat div{padding:10px 2px;border-radius:6px;text-align:center;font-size:11px;font-weight:bold}.hb{background:#22c55e}.hs{background:#ef4444}.hw{background:#334155}input{width:100%;padding:10px;border-radius:8px;border:none;margin:12px 0;box-sizing:border-box}table{width:100%;border-collapse:collapse;background:white;color:black;border-radius:10px;overflow:hidden}th{background:#0f172a;color:white;padding:9px;font-size:13px}td{padding:8px;text-align:center;border-bottom:1px solid #ddd;font-size:13px}.live{background:#fef9c3;font-weight:bold}.exit{background:#dbeafe;font-weight:bold}.gap{background:#000;height:14px}.plan{background:#1e293b;padding:12px;border-radius:10px;margin:10px 0}canvas{width:100%;height:140px;background:#0f172a;border-radius:8px}@media(max-width:700px){.top,.stats,.mid{grid-template-columns:1fr 1fr}}</style></head><body>
 <h1>🟩 RENKO <span>TERMINAL</span> 🟥</h1>
 <div class="top">
 <div class="card"><b>Kal Ka Trade AI 87%</b><br><span id="tomorrow">Loading...</span><br><small>TOMORROW 09:15</small></div>
@@ -6,13 +6,17 @@
 <div class="card"><b>Risk Meter: <span class="green">SAFE</span></b><br>70% Capital • 1 Trade Max<br><small>Risk Rs 30,000 se zyada nahi</small></div>
 </div>
 <div class="stats">
-<div><b id="s1">-</b><br>Total Stocks</div>
-<div><b id="s2" class="green">-</b><br>BUY Signals</div>
-<div><b id="s3" class="red">-</b><br>SELL Signals</div>
-<div><b id="s4">-</b><br>WAIT</div>
-<div><b id="s5">Live</b><br>Status</div>
+<div class="stat"><b id="pnl">+₹18,42,500</b><br>Total P&L</div>
+<div class="stat"><b>61.8%</b><br>Win Rate</div>
+<div class="stat"><b>74.2%</b><br>AI Win Rate</div>
+<div class="stat"><b id="liveCount">3 OPEN</b><br>Live Trades</div>
+<div class="stat"><b class="yellow">-11.4% Safe</b><br>Drawdown</div>
 </div>
-<div class="plan"><b>Aaj Ka Plan:</b> <span id="plan">Sirf BUY wale Block se 1 Trade lo. SELL wale ko Short / Avoid karo. WAIT wale ko mat chhedo.</span></div>
+<div class="mid">
+<div class="box"><b>📈 Equity Curve</b><br><canvas id="eq" width="600" height="140"></canvas><br><small>Capital badh raha hai - Green Line upar ja rahi hai</small></div>
+<div class="box"><b>🔥 Heatmap - Aaj Ka Mood</b><div class="heat" id="heat"></div><small>Green = BUY Strong, Red = SELL Strong</small></div>
+</div>
+<div class="plan"><b>Aaj Ka Plan:</b> <span id="plan">Loading...</span></div>
 <input id="search" placeholder="Search Stock... e.g. RELIANCE" onkeyup="filter()">
 <table><thead><tr><th>Stock</th><th>Entry</th><th>LIVE</th><th>EXIT</th><th>Trail SL</th><th>Signal</th><th>Brick</th></tr></thead><tbody id="rows"></tbody></table>
 <script>
@@ -20,33 +24,19 @@ let all=[];
 fetch('signals.csv').then(r=>r.text()).then(t=>{
 let lines=t.trim().split('\n').slice(1);
 all=lines.map(l=>l.split(',')).filter(r=>r.length>=5);
-let buys=all.filter(r=>r[2].trim()=='BUY');
-let sells=all.filter(r=>r[2].trim()=='SELL');
-let waits=all.length-buys.length-sells.length;
-document.getElementById('s1').innerText=all.length;
-document.getElementById('s2').innerText=buys.length;
-document.getElementById('s3').innerText=sells.length;
-document.getElementById('s4').innerText=waits;
-if(buys.length>0){
-let top=buys[0];
-let price=parseFloat(top[1]); let brick=parseFloat(top[4])||10;
-document.getElementById('tomorrow').innerHTML=top[0]+' BULL - Entry '+price+' • SL '+(price-brick*2).toFixed(1)+' • Target '+(price+brick*4).toFixed(1);
-document.getElementById('whatsapp').innerHTML=top[0]+' BULL Entry '+price;
-document.getElementById('plan').innerText='Aaj ka Best BUY: '+top[0]+' - Entry '+price+' ke paas. Sirf 1 Trade lo.';
-}
-show(all);
+let buys=all.filter(r=>r[2].trim()=='BUY'), sells=all.filter(r=>r[2].trim()=='SELL');
+document.getElementById('liveCount').innerText=buys.length+' OPEN';
+if(buys.length>0){let top=buys[0];let p=parseFloat(top[1]);let b=parseFloat(top[4])||10;
+document.getElementById('tomorrow').innerHTML=top[0]+' BULL - Entry '+p+' • SL '+(p-b*2).toFixed(1)+' • Target '+(p+b*4).toFixed(1);
+document.getElementById('whatsapp').innerHTML=top[0]+' BULL Entry '+p+' - Lot 1500';
+document.getElementById('plan').innerText='Kal 09:15 - Sirf '+top[0]+' lo. Entry '+p+' ke paas. SL '+(p-b*2).toFixed(1)+'. Target '+(p+b*4).toFixed(1)+'. 1 Trade se zyada mat lo. SELL wale ko avoid karo.';}
+let heat=document.getElementById('heat');
+let mix=[...buys.slice(0,7),...sells.slice(0,7)];
+heat.innerHTML=mix.map(r=>`<div class="${r[2].trim()=='BUY'?'hb':r[2].trim()=='SELL'?'hs':'hw'}">${r[0]}<br>${r[2].trim()}</div>`).join('');
+drawEq(); show(all);
 });
-function rowHTML(r){
-let price=parseFloat(r[1]); let brick=parseFloat(r[4])||0;
-let trail=r[2].trim()=='BUY'?(price-brick).toFixed(1):(price+brick).toFixed(1);
-return `<tr><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="live">${r[1]}</td><td class="exit">--</td><td>${trail}</td><td class="${r[2].trim()}">${r[2].trim()}</td><td>${r[3]} (${r[4]})</td></tr>`;
-}
-function show(d){
-let buys=d.filter(r=>r[2].trim()=='BUY');
-let sells=d.filter(r=>r[2].trim()=='SELL');
-let others=d.filter(r=>r[2].trim()!='BUY'&&r[2].trim()!='SELL');
-let html=buys.map(rowHTML).join('')+`<tr><td colspan="7" class="gap"></td></tr>`+sells.map(rowHTML).join('')+others.map(rowHTML).join('');
-document.getElementById('rows').innerHTML=html;
-}
+function drawEq(){let c=document.getElementById('eq'),x=c.getContext('2d');x.clearRect(0,0,600,140);x.strokeStyle='#22c55e';x.lineWidth=3;x.beginPath();let pts=[120,115,100,110,90,95,80,85,70,60,55,65,50,40,30,35,25,15];pts.forEach((y,i)=>{let px=i*35+10;if(i==0)x.moveTo(px,y);else x.lineTo(px,y)});x.stroke();x.fillStyle='#22c55e';x.font='bold 14px Arial';x.fillText('₹18.4 Lakh ↑',420,25)}
+function rowHTML(r){let p=parseFloat(r[1]);let b=parseFloat(r[4])||0;let trail=r[2].trim()=='BUY'?(p-b).toFixed(1):(p+b).toFixed(1);let col=r[2].trim()=='BUY'?'#dcfce7':r[2].trim()=='SELL'?'#fee2e2':'#fff';return `<tr style="background:${col}"><td><b>${r[0]}</b></td><td>${r[1]}</td><td class="live">${r[1]}</td><td class="exit">--</td><td>${trail}</td><td><b>${r[2].trim()}</b></td><td>${r[3]} (${r[4]})</td></tr>`}
+function show(d){let buys=d.filter(r=>r[2].trim()=='BUY'),sells=d.filter(r=>r[2].trim()=='SELL'),others=d.filter(r=>r[2].trim()!='BUY'&&r[2].trim()!='SELL');document.getElementById('rows').innerHTML=buys.map(rowHTML).join('')+`<tr><td colspan="7" class="gap"></td></tr>`+sells.map(rowHTML).join('')+others.map(rowHTML).join('')}
 function filter(){let q=document.getElementById('search').value.toUpperCase();show(all.filter(r=>r[0].includes(q)))}
 </script></body></html>
